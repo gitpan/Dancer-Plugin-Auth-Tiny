@@ -28,7 +28,7 @@ no_index:
 provides:
   Dancer::Plugin::Auth::Tiny:
     file: lib/Dancer/Plugin/Auth/Tiny.pm
-    version: 0.001
+    version: 0.002
 requires:
   Carp: 0
   Dancer: 0
@@ -40,4 +40,4 @@ resources:
   bugtracker: https://github.com/dagolden/dancer-plugin-auth-tiny/issues
   homepage: https://metacpan.org/release/Dancer-Plugin-Auth-Tiny
   repository: git://github.com/dagolden/dancer-plugin-auth-tiny.git
-version: 0.001
+version: 0.002

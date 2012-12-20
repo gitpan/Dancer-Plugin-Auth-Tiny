@@ -2,7 +2,7 @@ NAME
     Dancer::Plugin::Auth::Tiny - Require logged-in user for specified routes
 
 VERSION
-    version 0.001
+    version 0.002
 
 SYNOPSIS
       use Dancer::Plugin::Auth::Tiny;
@@ -54,17 +54,26 @@ DESCRIPTION
     It is up to you to provide the '/login' route, handle actual
     authentication, and set "user" session variable if login is successful.
 
+    If the original request contains a parameter in the "passthrough" list,
+    it will be added to the login query. For example,
+    "http://example.com/private?user=dagolden" will be redirected as
+    "http://example.com/login?user=dagolden&return_url=...". This
+    facilitates pre-populating a login form.
+
 CONFIGURATION
     You may override any of these settings:
 
-    *   "login_route" defines where a protected route is redirected. Default
-        is '/login'.
+    *   "login_route: /login" -- defines where a protected route is
+        redirected
 
-    *   "logged_in_key" defines the session key that must be true to
-        indicate a logged-in user. Default is 'user'.
+    *   "logged_in_key: user" -- defines the session key that must be true
+        to indicate a logged-in user
 
-    *   "callback_key" defines the parameter key with the original request
-        URL that is passed to the login route. Default is 'return_url'.
+    *   "callback_key: return_url" -- defines the parameter key with the
+        original request URL that is passed to the login route
+
+    *   "passthrough: - user" -- a list of parameters that should be passed
+        through to the login handler
 
 EXTENDING
     The class method "extend" may be used to add (or override)
@@ -111,7 +120,7 @@ EXTENDING
         }
       );
 
-      get 'parental' => needs any_role => qw/mom dad/ => sub { ... };
+      get '/parental' => needs any_role => qw/mom dad/ => sub { ... };
 
 SEE ALSO
     For more complex Dancer authentication, see:

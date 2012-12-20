@@ -4,7 +4,7 @@ use warnings;
 
 package Dancer::Plugin::Auth::Tiny;
 # ABSTRACT: Require logged-in user for specified routes
-our $VERSION = '0.001'; # VERSION
+our $VERSION = '0.002'; # VERSION
 
 use Carp qw/croak/;
 
@@ -38,13 +38,18 @@ sub extend {
 sub _build_login {
   my ($coderef) = @_;
   return sub {
-    $conf ||= { _default_conf(), %{plugin_setting()} }; # lazy
+    $conf ||= { _default_conf(), %{ plugin_setting() } }; # lazy
     if ( session $conf->{logged_in_key} ) {
       goto $coderef;
     }
     else {
-      return redirect uri_for( $conf->{login_route},
-        { $conf->{callback_key} => uri_for( request->path, request->params ) } );
+      my $query_params = params("query");
+      my $data =
+        { $conf->{callback_key} => uri_for( request->path, $query_params ) };
+      for my $k ( @{ $conf->{passthrough} } ) {
+        $data->{$k} = params->{$k} if params->{$k};
+      }
+      return redirect uri_for( $conf->{login_route}, $data );
     }
   };
 }
@@ -54,6 +59,7 @@ sub _default_conf {
     login_route   => '/login',
     logged_in_key => 'user',
     callback_key  => 'return_url',
+    passthrough   => [qw/user/],
   );
 }
 
@@ -74,7 +80,7 @@ Dancer::Plugin::Auth::Tiny - Require logged-in user for specified routes
 
 =head1 VERSION
 
-version 0.001
+version 0.002
 
 =head1 SYNOPSIS
 
@@ -128,6 +134,12 @@ The code above is roughly equivalent to this:
 It is up to you to provide the '/login' route, handle actual authentication,
 and set C<user> session variable if login is successful.
 
+If the original request contains a parameter in the C<passthrough> list, it
+will be added to the login query. For example,
+C<http://example.com/private?user=dagolden> will be redirected as
+C<http://example.com/login?user=dagolden&return_url=...>.  This facilitates
+pre-populating a login form.
+
 =for Pod::Coverage extend
 
 =head1 CONFIGURATION
@@ -138,15 +150,19 @@ You may override any of these settings:
 
 =item *
 
-C<login_route> defines where a protected route is redirected. Default is '/login'.
+C<login_route: /login> -- defines where a protected route is redirected
 
 =item *
 
-C<logged_in_key> defines the session key that must be true to indicate a logged-in user. Default is 'user'.
+C<logged_in_key: user> -- defines the session key that must be true to indicate a logged-in user
 
 =item *
 
-C<callback_key> defines the parameter key with the original request URL that is passed to the login route. Default is 'return_url'.
+C<callback_key: return_url> -- defines the parameter key with the original request URL that is passed to the login route
+
+=item *
+
+C<passthrough: - user> -- a list of parameters that should be passed through to the login handler
 
 =back
 
@@ -195,7 +211,7 @@ You could pass additional arguments before the code reference like so:
     }
   );
 
-  get 'parental' => needs any_role => qw/mom dad/ => sub { ... };
+  get '/parental' => needs any_role => qw/mom dad/ => sub { ... };
 
 =head1 SEE ALSO
 
